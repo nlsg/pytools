@@ -9,7 +9,7 @@ try:
 except IndexError:
     cmds.append(f"git commit")
      
-cmds.append(f"git push https://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@github.com/nlsg/{dir}")
+cmds.append(f"git push https://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@github.com/nlsg/{dir}")
 for cmd in cmds:
     print(cmd)
 
