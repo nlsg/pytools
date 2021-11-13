@@ -1,0 +1,16 @@
+<MyLayout>
+	BoxLayout:
+		orientation: "vertical"
+		size: root.width, root.height
+	
+		Label:
+			id: label_id
+			text: "What's Your Name?"
+			font_size: 32
+
+		TextInput:
+			id: input_id
+			text: "std_entry"
+			size_hint: (1, .5)
+			on_text: root.process_text()
+
