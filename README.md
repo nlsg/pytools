@@ -1,6 +1,6 @@
 # a toolset of minimalistic python scripts
 
-# push.py
+## push.py
 A simple tool to automate the git push process.
 It generates a "push.ini" file for each repository,
 all options in its "chain" section get executed 
