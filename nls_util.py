@@ -13,6 +13,10 @@ cli = {"RED"  : "\033[1;31m",
     }
 
 '''util funct'''
+def notify(title, msg, argstr = ""):
+    import os
+    os.system(f"notify-send {argstr} \"{title}\" \"{msg}\"")
+
 def int_input(fail_txt = "input needs to be a number!", txt = "enter a number: ", **kwargs):
     in_ = 0
     check_for_max = False

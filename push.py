@@ -20,7 +20,7 @@ class GitPush():
             if "push.ini\n" not in lns:
                 f.write("push.ini\n")
 
-        self.git_token = open(os.path.expanduser('~') + "/py/git_access.token").read()
+        self.git_token = open(os.path.expanduser('~') + "/py/git_access.token").read()[:-1]
         
         self.msg, self.ini_file = "", "push.ini"
         opts, argv = getopt.getopt(sys.argv[1:], "m:i:h")
@@ -66,7 +66,7 @@ class GitPush():
         self.msg = self.ini["push"]["pre_msg"] + self.msg + self.ini["push"]["post_msg"]
         cmds = [
                 f"git commit -m \"{self.msg}\""
-                ,f"git push https://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@github.com/nlsg/{self.ini['push']['repository']}"
+                ,f"git push https://{self.git_token}@github.com/nlsg/{self.ini['push']['repository']}"
                 ]
         
         db("printing chain...")
