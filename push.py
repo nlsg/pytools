@@ -31,9 +31,7 @@ class GitPush():
             lns = f.readlines()
             if "push.ini\n" not in lns:
                 f.write("push.ini\n")
-
         self.git_token = open(os.path.expanduser('~') + "/py/git_access.token").read()[:-1]
-        
         self.msg, self.ini_file = "", "push.ini"
         opts, argv = getopt.getopt(sys.argv[1:], "m:i:hf")
         for k, v in opts:
@@ -56,9 +54,9 @@ class GitPush():
             push_cfgs = {
                     "pre_msg":""
                     ,"post_msg":""
+                    ,"default_msg":""
                     ,"repository":os.getcwd().split("/")[-1]
-                    ,"confirm":"1"
-                    ,"request_msg":"1"
+                    ,"confirm":"True"
                     }
             self.ini.add_section("push")
             for cfg in push_cfgs:
@@ -75,25 +73,27 @@ class GitPush():
             db("ini_writen!")
 
     def exec_(self):
-        if self.msg == "" and self.ini.getboolean("push", "request_msg"): self.msg = input("commit msg>")
-        self.msg = self.ini["push"]["pre_msg"] + self.msg + self.ini["push"]["post_msg"]
-        cmds = [
-                f"git commit -m \"{self.msg}\""
-                ,f"git push https://{self.git_token}@github.com/nlsg/{self.ini['push']['repository']}"
+        cf = self.ini["push"]
+        if self.msg == "":
+            self.msg = cf["default_msg"]
+            if self.msg == "":
+                self.msg = input("commit msg>")
+        self.msg = cf["pre_msg"] + self.msg + cf["post_msg"]
+
+        cmds = [f"git commit -m \"{self.msg}\""
+                ,f"git push https://{self.git_token}@github.com/nlsg/{cf['repository']}"
                 ]
-        
-        db("printing chain...")
-        for cmd in self.ini.options("chain"):db(self.ini["chain"][cmd])
-        for cmd in cmds                     :db(cmd)
 
-        def commit():
-            for cmd in self.ini.options("chain"):os.system(self.ini["chain"][cmd])
-            for cmd in cmds                     :os.system(cmd)
+        def commit(func):
+            for cmd in self.ini.options("chain"):func(self.ini["chain"][cmd])
+            for cmd in cmds                     :func(cmd)
 
-        if self.ini.getboolean("push", "confirm"):
+        commit(print)
+
+        if cf.getboolean("confirm"):
             if not input("[c]ommit\n>") == "c":
                 sys.exit(0)
-        commit()
+        commit(os.system)
 
 
 gt = GitPush()
