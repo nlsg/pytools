@@ -13,11 +13,14 @@ cli = {"RED"  : "\033[1;31m",
     }
 
 '''util funct'''
-def notify(title, msg, argstr = ""):
+def notify(title, msg, argstr = "", critical = False):
     import os
+    if critical:
+        argstr +=  " --urgency=critical "
     os.system(f"notify-send {argstr} \"{title}\" \"{msg}\"")
+    gt.fetch_args()
 
-def int_input(fail_txt = "input needs to be a number!", txt = "enter a number: ", **kwargs):
+def int_input(fail_txt = "input has to be a number!", txt = "enter a number: ", **kwargs):
     in_ = 0
     check_for_max = False
     if "max" in kwargs:
@@ -38,6 +41,16 @@ def int_input(fail_txt = "input needs to be a number!", txt = "enter a number: "
     return in_
 
 def time_stamp(): return dt.now().strftime("%d-%b_%H-%M")
+
+def grep(regex, itterable, **kwargs):
+    import re
+    print_res = True
+    if "print" in kwargs: print_res = kwargs["print"]
+    for itm in itterable:
+        if re.search(regex, itm) != None:
+            if print_res: print(itm)
+            yield itm
+    
 
 def cat(file):
     import os

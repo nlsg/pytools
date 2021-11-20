@@ -9,10 +9,22 @@ def db(*args, **kwargs):
 class GitPush():
 
     def usage(self):
-        print("usage: -h | -i <inifile> | -m <commit msg>")
+        print("usage: -h | -i <inifile> | -m <commit msg> | -f[irefox] <file> ")
         sys.exit(0)
 
-    def fetch_args(self):
+    def open_in_firefox(self):
+        self.parse_ini()
+        url = f"https://github.com/nlsg/{self.ini['push'].get('repository')}/"
+        if len(sys.argv) > 2:
+            url += "blob/main/"
+            url += "/".join(sys.argv[2:])
+        print(f"firefox {url}")
+        os.system(f"firefox {url}")
+        sys.stdout = open('/dev/null', 'w')
+        sys.stderr = open('/dev/null', 'w')
+        sys.exit()
+
+    def get_args(self):
         if not os.path.exists(".gitignore"):
             os.system("touch .gitignore")
         with (f := open(".gitignore", "r+")):
@@ -23,11 +35,12 @@ class GitPush():
         self.git_token = open(os.path.expanduser('~') + "/py/git_access.token").read()[:-1]
         
         self.msg, self.ini_file = "", "push.ini"
-        opts, argv = getopt.getopt(sys.argv[1:], "m:i:h")
+        opts, argv = getopt.getopt(sys.argv[1:], "m:i:hf")
         for k, v in opts:
             if k == "-i":self.ini_file  = v
             if k == "-m":self.msg       = v
             if k == "-h":self.usage()
+            if k == "-f":self.open_in_firefox()
         db(f"{self.ini_file=}, {self.msg=}")
 
     def parse_ini(self):
@@ -62,7 +75,7 @@ class GitPush():
             db("ini_writen!")
 
     def exec_(self):
-        if self.msg == "" and bool(int(self.ini["push"]["request_msg"])): self.msg = input("commit msg>")
+        if self.msg == "" and self.ini.getboolean("push", "request_msg"): self.msg = input("commit msg>")
         self.msg = self.ini["push"]["pre_msg"] + self.msg + self.ini["push"]["post_msg"]
         cmds = [
                 f"git commit -m \"{self.msg}\""
@@ -77,14 +90,28 @@ class GitPush():
             for cmd in self.ini.options("chain"):os.system(self.ini["chain"][cmd])
             for cmd in cmds                     :os.system(cmd)
 
-        if bool(int(self.ini["push"]["confirm"])):
+        if self.ini.getboolean("push", "confirm"):
             if not input("[c]ommit\n>") == "c":
                 sys.exit(0)
         commit()
 
 
-
 gt = GitPush()
-gt.fetch_args()
-gt.parse_ini()
-gt.exec_()
+
+def main():
+    gt.get_args()
+    gt.parse_ini()
+    gt.exec_()
+
+if __name__ == "__main__":
+    main()
+
+    for cf in gt.ini["push"]:
+        print(cf)
+
+    cf = gt.ini["push"]
+    cf.get("repository")
+
+
+
+
