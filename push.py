@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os, sys, getopt, re
+import nls_util as nut
 from configparser import ConfigParser
 
 def db(*args, **kwargs):
@@ -9,20 +10,18 @@ def db(*args, **kwargs):
 class GitPush():
 
     def usage(self):
-        print("usage: -h | -i <inifile> | -m <commit msg> | -f[irefox] <file> ")
-        sys.exit(0)
+        print("usage: -h | -i <inifile> | -m <commit msg> | -f[irefox] <file> | -a[dd cmd] <cmd> ")
+        nut.quiet_exit()
 
-    def open_in_firefox(self):
+    def open_in(file="",browser="firefox"):
         self.parse_ini()
         url = f"https://github.com/nlsg/{self.ini['push'].get('repository')}/"
-        if len(sys.argv) > 2:
+        if file != "":
             url += "blob/main/"
-            url += "/".join(sys.argv[2:])
-        print(f"firefox {url}")
-        os.system(f"firefox {url}")
-        sys.stdout = open('/dev/null', 'w')
-        sys.stderr = open('/dev/null', 'w')
-        sys.exit()
+            url += file
+        print(f"{browser} {url}")
+        os.system(f"{browser} {url}")
+        nut.quiet_exit()
 
     def get_args(self):
         if not os.path.exists(".gitignore"):
@@ -33,13 +32,28 @@ class GitPush():
                 f.write("push.ini\n")
         self.git_token = open(os.path.expanduser('~') + "/py/git_access.token").read()[:-1]
         self.msg, self.ini_file = "", "push.ini"
-        opts, argv = getopt.getopt(sys.argv[1:], "m:i:hf")
+        opts, argv = getopt.getopt(sys.argv[1:], "m:i:a:hf")
         for k, v in opts:
             if k == "-i":self.ini_file  = v
             if k == "-m":self.msg       = v
             if k == "-h":self.usage()
-            if k == "-f":self.open_in_firefox()
+            if k == "-v":self.open_in("qutwbrowser")
+            if k == "-a":self.add_cmd(v)
         db(f"{self.ini_file=}, {self.msg=}")
+
+    def add_cmd(self,cmd):
+        self.ini = ConfigParser()
+        self.ini.read(self.ini_file)
+        chain = self.ini["chain"]
+        splts = cmd.split("=")
+        if len(splts) == 1:
+            chain[f"cmd{len(chain)}"] = cmd 
+        else:
+            cmd = "" 
+            for splt in splts[1:]: cmd += splt
+            chain[f"{splts[0]}"] = cmd
+        self.ini.write(open(self.ini_file, "w"))
+        nut.quiet_exit()
 
     def parse_ini(self):
         write_flg = False
@@ -56,7 +70,7 @@ class GitPush():
                     ,"post_msg":""
                     ,"default_msg":""
                     ,"repository":os.getcwd().split("/")[-1]
-                    ,"confirm":"True"
+                    ,"confirm_before_push":"True"
                     }
             self.ini.add_section("push")
             for cfg in push_cfgs:
@@ -90,9 +104,9 @@ class GitPush():
 
         commit(print)
 
-        if cf.getboolean("confirm"):
+        if cf.getboolean("confirm_before_push"):
             if not input("[c]ommit\n>") == "c":
-                sys.exit(0)
+                nut.quiet_exit()
         commit(os.system)
 
 

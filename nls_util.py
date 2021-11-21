@@ -13,6 +13,13 @@ cli = {"RED"  : "\033[1;31m",
     }
 
 '''util funct'''
+def quiet_exit(exit_code=0,msg="",*args,**kwargs):
+    import sys
+    print(msg,*args,**kwargs)
+    sys.stdout = open('/dev/null', 'w')
+    sys.stderr = open('/dev/null', 'w')
+    sys.exit(exit_code)
+
 def notify(title, msg, argstr = "", critical = False):
     import os
     if critical:
