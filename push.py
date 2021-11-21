@@ -109,10 +109,7 @@ class GitPush():
                 nut.quiet_exit()
         commit(os.system)
 
-
 gt = GitPush()
-
-
 
 def main():
     gt.get_args()
