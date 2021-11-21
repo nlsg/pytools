@@ -112,10 +112,6 @@ class GitPush():
 
 gt = GitPush()
 
-
-
-gt
-
 def main():
     gt.get_args()
     gt.parse_ini()
