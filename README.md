@@ -29,21 +29,14 @@ push.py (-i <ini-file>) [no_arg] | -m <msg> | -v[iew] <file> | -a[dd cmd] <cmd> 
 In the "push" section are a few self explanatory options.
 If you dont want to write a message for every commit,
 set the default_msg variable
+
 ```[push]
 pre_msg = 
 post_msg = 
 default_msg = minor updates
 repository = pytools
 confirm = True
-
-```
-[push]
-pre_msg = 
-post_msg = 
-default_msg = minor updates
-repository = pytools
-confirm = True
-
+ 
 [chain]
 cmd0 = git add .
 cmd1 = git status
