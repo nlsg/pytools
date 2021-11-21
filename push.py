@@ -10,10 +10,10 @@ def db(*args, **kwargs):
 class GitPush():
 
     def usage(self):
-        print("usage: -h | -i <inifile> | -m <commit msg> | -f[irefox] <file> | -a[dd cmd] <cmd> ")
+        print("usage: push.py (-i <ini-file>) [no_arg] | -m <msg> | -v[iew] <file> | -a[dd cmd] <cmd> | -h")
         nut.quiet_exit()
 
-    def open_in(file="",browser="firefox"):
+    def open_in(self,file="",browser="firefox"):
         self.parse_ini()
         url = f"https://github.com/nlsg/{self.ini['push'].get('repository')}/"
         if file != "":
@@ -32,12 +32,12 @@ class GitPush():
                 f.write("push.ini\n")
         self.git_token = open(os.path.expanduser('~') + "/py/git_access.token").read()[:-1]
         self.msg, self.ini_file = "", "push.ini"
-        opts, argv = getopt.getopt(sys.argv[1:], "m:i:a:hf")
+        opts, argv = getopt.getopt(sys.argv[1:], "m:i:a:v:h")
         for k, v in opts:
             if k == "-i":self.ini_file  = v
             if k == "-m":self.msg       = v
             if k == "-h":self.usage()
-            if k == "-v":self.open_in("qutwbrowser")
+            if k == "-v":self.open_in(v,"qutebrowser")
             if k == "-a":self.add_cmd(v)
         db(f"{self.ini_file=}, {self.msg=}")
 
