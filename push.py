@@ -111,9 +111,6 @@ class GitPush():
 
 
 gt = GitPush()
-gt
-
-
 
 
 
