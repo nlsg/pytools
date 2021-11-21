@@ -1,4 +1,8 @@
 #!/usr/bin/python3
+'''
+a simble daemon that observes your battery,
+level and stores ut in a csv file
+'''
 import os, sys, getopt, re
 import nls_util as nut
 from configparser import ConfigParser
