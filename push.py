@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 '''
-a simble daemon that observes your battery,
-level and stores ut in a csv file
+a simple wrapper around
 '''
 import os, sys, getopt, re
 import nls_util as nut
@@ -21,7 +20,7 @@ class GitPush():
         self.parse_ini()
         url = f"https://github.com/nlsg/{self.ini['push'].get('repository')}/"
         if file != "":
-            url += "blob/main/"
+            url += f"blob/{self.ini['push'].get('branch')}/"
             url += file
         print(f"{browser} {url}")
         os.system(f"{browser} {url}")
