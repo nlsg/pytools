@@ -33,9 +33,9 @@ set the default_msg variable
 ```[push]
 pre_msg = 
 post_msg = 
-default_msg = minor updates
+default_msg = 
 repository = pytools
-branch =
+branch = master
 confirm_before_push = True
  
 [chain]
