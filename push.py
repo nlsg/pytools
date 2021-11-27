@@ -74,7 +74,7 @@ class GitPush():
                     ,"default_msg":""
                     ,"repository":os.getcwd().split("/")[-1]
                     ,"branch":"master"
-                        ,"confirm_before_push":"True"
+                    ,"confirm_before_push":"True"
                     }
             self.ini.add_section("push")
             for cfg in standard_cfg:
