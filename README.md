@@ -35,7 +35,8 @@ pre_msg =
 post_msg = 
 default_msg = minor updates
 repository = pytools
-confirm = True
+branch =
+confirm_before_push = True
  
 [chain]
 cmd0 = git add .

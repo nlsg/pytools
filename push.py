@@ -68,18 +68,19 @@ class GitPush():
 
         if "push" not in self.ini:
             write_flg = True
-            push_cfgs = {
+            standard_cfg = {
                     "pre_msg":""
                     ,"post_msg":""
                     ,"default_msg":""
                     ,"repository":os.getcwd().split("/")[-1]
                     ,"confirm_before_push":"True"
+                    ,"branch":"master"
                     }
             self.ini.add_section("push")
-            for cfg in push_cfgs:
+            for cfg in standard_cfg:
                 if cfg not in self.ini["push"]:
-                    self.ini["push"][cfg] = push_cfgs[cfg]
-                db(f"key: {cfg}, val: {push_cfgs[cfg]}")
+                    self.ini["push"][cfg] = standard_cfg[cfg]
+                db(f"key: {cfg}, val: {standard_cfg[cfg]}")
 
         if "chain" not in self.ini:
             write_flg = True
