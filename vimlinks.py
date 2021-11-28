@@ -11,4 +11,4 @@ def get_url(args):
 
 if __name__ == "__main__":
   url = get_url(sys.argv[1:])
-  print(f"links {url}")
+  os.system(f"links {url}")
