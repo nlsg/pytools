@@ -13,10 +13,15 @@ cli = {"RED"  : "\033[1;31m",
     }
 
 '''util funct'''
+def ls(folder, grep_regex=""): 
+  '''list content of a dir'''
+  if grep_regex == "":
+    return os.popen(f"ls {folder}").read().split("\n")
+  else:
+    return os.popen(f"ls {folder} | grep {grep_regex}").read().split("\n")
+
 def quiet_exit(exit_code=0,msg="",*args,**kwargs):
-    '''
-    same as sys.exit() but gives no stdout
-    '''
+    '''same as sys.exit() but gives no stdout'''
     import sys
     print(msg,*args,**kwargs)
     sys.stdout = open('/dev/null', 'w')
@@ -24,9 +29,7 @@ def quiet_exit(exit_code=0,msg="",*args,**kwargs):
     sys.exit(exit_code)
 
 def notify(title, msg, argstr = "", critical = False):
-    '''
-    send a notification thru notify-send package.
-    '''
+    '''send a notification thru notify-send package.'''
     import os
     if critical:
         argstr +=  " --urgency=critical "
@@ -34,9 +37,7 @@ def notify(title, msg, argstr = "", critical = False):
     gt.fetch_args()
 
 def int_input(fail_txt = "input has to be a number!", txt = "enter a number: ", **kwargs):
-    '''
-    force usr to input a integer
-    ''' 
+    '''force usr to input a integer''' 
     in_ = 0
     check_for_max = False
     if "max" in kwargs:
@@ -56,12 +57,10 @@ def int_input(fail_txt = "input has to be a number!", txt = "enter a number: ", 
             print(fail_txt)
     return in_
 
-def time_stamp(): return dt.now().strftime("%d-%b_%H-%M")
+def time_stamp(format="%d-%b_%H-%M"): return dt.now().strftime(format)
 
 def grep(regex, itterable, **kwargs):
-    '''
-    grep genrator wrapper
-    '''
+    '''grep genrator wrapper'''
     import re
     print_res = True
     if "print" in kwargs: print_res = kwargs["print"]
@@ -78,9 +77,7 @@ def cat(file):
 # add color feature!
 
 def listing(obj):
-    '''
-    listing objects line by line
-    '''
+    '''listing objects line by line'''
     for i in range(len(obj)):
         try:
             print(f"[{i}] -> {obj[i]}")
@@ -106,9 +103,7 @@ class Timer():
         self.last_stamp = t.time()
 
 def tee(file,*args, **kwargs):
-    '''
-    log to a file and stdout
-    '''
+    '''log to a file and stdout'''
     from contextlib import redirect_stdout
     with open(file, "a") as f:
         with redirect_stdout(f):
@@ -119,9 +114,7 @@ def tee(file,*args, **kwargs):
 
     '''decorators'''
 def func_info(func, **kwargs):
-    '''
-    dehelp(nut)corator which prints info about the called function
-    '''
+    '''dehelp(nut)corator which prints info about the called function'''
     col = "GREEN"
     if "col" in kwargs:
         col = kwargs["col"]
