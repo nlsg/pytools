@@ -14,9 +14,12 @@ cli = {"RED"  : "\033[1;31m",
 
 '''util funct'''
 def ls(folder): 
-  '''list content of a dir'''
+  '''list content of a dir
+  returns popen object
+  for raw list output use: ".read().split("\n")a"
+  '''
   import os
-  return os.popen(f"ls {folder}").read().split("\n")
+  return os.popen(f"ls {folder}")
 
 def quiet_exit(exit_code=0,msg="",*args,**kwargs):
   '''same as sys.exit() but gives no stdout'''
@@ -32,7 +35,6 @@ def notify(title, msg, argstr = "", critical = False):
   if critical:
     argstr +=  " --urgency=critical "
   os.system(f"notify-send {argstr} \"{title}\" \"{msg}\"")
-  gt.fetch_args()
 
 def int_input(fail_txt = "input has to be a number!", txt = "enter a number: ", **kwargs):
   '''force usr to input a integer''' 
@@ -81,6 +83,24 @@ def listing(obj):
       print(f"[{i}] -> {obj[i]}")
     except:
       print(f"[{i}] -> {obj}")
+
+'''context managers'''
+class Curses():
+  def __init__(self):
+    import curses
+    self.stdscr = curses.initscr()
+  def __enter__(self):
+    import curses
+    curses.noecho()
+    curses.cbreak()
+    self.stdscr.keypad(True)
+  def __exit__(self, type, value, traceback):
+    import curses
+    curses.nocbreak()
+    self.stdscr.keypad(False)
+    curses.echo()
+    curses.endwin()
+
 
 class Timer():
   def __init__(self, name = ""):
