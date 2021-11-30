@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from datetime import datetime as dt
+import os
 
 '''consts'''
 cli = {"RED"  : "\033[1;31m",
@@ -15,7 +16,6 @@ cli = {"RED"  : "\033[1;31m",
 '''util funct'''
 def ls(folder, grep_regex=""): 
   '''list content of a dir'''
-  import os
   if grep_regex == "":
     return os.popen(f"ls {folder}").read().split("\n")
   else:
