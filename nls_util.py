@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 from datetime import datetime as dt
-import os
 
 '''consts'''
 cli = {"RED"  : "\033[1;31m",
@@ -14,12 +13,10 @@ cli = {"RED"  : "\033[1;31m",
     }
 
 '''util funct'''
-def ls(folder, grep_regex=""): 
+def ls(folder): 
   '''list content of a dir'''
-  if grep_regex == "":
-    return os.popen(f"ls {folder}").read().split("\n")
-  else:
-    return os.popen(f"ls {folder} | grep {grep_regex}").read().split("\n")
+  import os
+  return os.popen(f"ls {folder}").read().split("\n")
 
 def quiet_exit(exit_code=0,msg="",*args,**kwargs):
   '''same as sys.exit() but gives no stdout'''
