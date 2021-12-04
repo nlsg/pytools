@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-def tely_send(msg,api_token="/py/nls_notify_bot.token"):
+def send_message(msg,api_token="/py/nls_notify_bot.token"):
   import requests, os.path
   bot_token = open(os.path.expanduser('~') + api_token).read()[:-1]
 
@@ -17,9 +17,9 @@ if __name__ == "__main__":
   import nls_util as nut
 
   if len(sys.argv) == 2:
-    tely_send(sys.argv[1])
+    send_message(sys.argv[1])
   elif len(sys.argv) == 3:
-    tely_send(sys.argv[1], sys.argv[2])
+    send_message(sys.argv[1], sys.argv[2])
   else:
     usage = nut.cli["BOLD"] + "usage" + nut.cli["RESET"] + f" {sys.argv[0]} "
     help_str  = usage + "[msg] - default api path=/py/nls_notify_bot.token\n"

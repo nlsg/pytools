@@ -3,15 +3,18 @@
 from datetime import datetime as dt
 
 '''consts'''
-cli = {"RED"  : "\033[1;31m",
-    "BLUE" : "\033[1;34m",
-    "CYAN" : "\033[1;36m",
-    "GREEN": "\033[0;32m",
-    "RESET": "\033[0;0m",
-    "BOLD" :   "\033[;1m",
-    "REVERSE": "\033[;7m"
+cli = {"RED"  : "\033[1;31m"
+    ,"BLUE" : "\033[1;34m"
+    ,"CYAN" : "\033[1;36m"
+    ,"GREEN": "\033[0;32m"
+    ,"RESET": "\033[0;0m"
+    ,"BOLD" :   "\033[;1m"
+    ,"REVERSE": "\033[;7m"
     }
 
+log_config = {
+    "format":"[%(asctime)s|%(filename)s|%(funcName)s|%(lineno)d]> %(message)s"
+    ,"datefmt":"%I:%M"}
 '''util funct'''
 def ls(folder): 
   '''list content of a dir
@@ -69,10 +72,9 @@ def grep(regex, itterable, **kwargs):
       if print_res: print(itm)
       yield itm
   
-
 def cat(file):
     #cat a file
-    import os
+    import os.system
     os.system(f"cat {file}")
 # add color feature!
 
@@ -94,10 +96,12 @@ class Curses():
     self.curses.noecho()
     self.curses.cbreak()
     self.stdscr.keypad(True)
+    self.curses.curs_set(0)
   def __exit__(self, type, value, traceback):
     self.curses.nocbreak()
     self.stdscr.keypad(False)
     self.curses.echo()
+    self.curses.curs_set(1)
     self.curses.endwin()
 
 
