@@ -87,19 +87,18 @@ def listing(obj):
 '''context managers'''
 class Curses():
   def __init__(self):
-    import curses
+    import curses 
+    self.curses = curses
     self.stdscr = curses.initscr()
   def __enter__(self):
-    import curses
-    curses.noecho()
-    curses.cbreak()
+    self.curses.noecho()
+    self.curses.cbreak()
     self.stdscr.keypad(True)
   def __exit__(self, type, value, traceback):
-    import curses
-    curses.nocbreak()
+    self.curses.nocbreak()
     self.stdscr.keypad(False)
-    curses.echo()
-    curses.endwin()
+    self.curses.echo()
+    self.curses.endwin()
 
 
 class Timer():

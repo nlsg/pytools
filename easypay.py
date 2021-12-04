@@ -8,13 +8,23 @@ import easyocr
 import matplotlib.pyplot as plt
 import ctypes
 
+nut.ls("./")
 
-
+x,y = 0,0 
 with (c := nut.Curses()):
   c.stdscr.clear()
-  c.stdscr.addstr(0, 0, '10 divided by')
-  c.stdscr.getkey()
+  choice = 2
+  choices = ["aaa","bbb","ccc","ddd","eee"]
+  y,x = c.stdscr.getmaxyx()
+  c.stdscr.addstr(y-1, 0, f"{x=},{y=}", c.curses.A_BOLD)
+  while True:
+    in_ = c.stdscr.getkey()
+    if in_ == 'k' and choice > 0: choice -= 1
+    elif in_ == 'j' and choice < len(choices)-1: choice += 1
+    elif in_ =='q': break
 
+    for i in range(len(choices)):
+      c.stdscr.addstr(i,0,choices[i], c.curses.A_REVERSE if choice == i else c.curses.A_NORMAL)
 
 # help(nut)
 # def get_imgs(folder): 
@@ -39,7 +49,7 @@ with (c := nut.Curses()):
 #   print(pytesseract.image_to_string(Image.open("easypay_assets/easy_rotated.jpg")))
 # import nls_util as nut
 # nut.notify("dd","ww")
-# nut.ls("*ass*")
+# nut.ls("*ass*").read().split("\n")a
 # def test(folder):
-#   info = get_img_text("easypay_assets/" + nut.ls(folder))
+#   info = get_img_text("easypay_assets/" + nut.ls(folder).read().split("\n")a)
 #   info.sort()
