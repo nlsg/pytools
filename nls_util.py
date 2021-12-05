@@ -15,14 +15,18 @@ cli = {"RED"  : "\033[1;31m"
 log_config = {
     "format":"[%(asctime)s|%(filename)s|%(funcName)s|%(lineno)d]> %(message)s"
     ,"datefmt":"%I:%M"}
+
 '''util funct'''
-def ls(folder): 
+def ls_raw(directory): 
   '''list content of a dir
   returns popen object
-  for raw list output use: ".read().split("\n")a"
+  for output in listformat use ls
   '''
   import os
-  return os.popen(f"ls {folder}")
+  return os.popen(f"ls {directory}")
+def ls(directory):
+  '''for raw popen output use ls_raw'''
+  ls(directory).read().split("\n")
 
 def quiet_exit(exit_code=0,msg="",*args,**kwargs):
   '''same as sys.exit() but gives no stdout'''
