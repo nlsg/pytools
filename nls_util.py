@@ -62,16 +62,26 @@ def int_input(fail_txt = "input has to be a number!", txt = "enter a number: ", 
 
 def time_stamp(format="%d-%b_%H-%M"): return dt.now().strftime(format)
 
-def grep(regex, itterable, **kwargs):
-  '''grep genrator wrapper'''
-  import re
+def grep(regex, itterable):
+  '''
+  grap an itterable object
+  wrapper arround re mudule
+  '''
+  from re import search
   print_res = True
-  if "print" in kwargs: print_res = kwargs["print"]
-  for itm in itterable:
-    if re.search(regex, itm) != None:
-      if print_res: print(itm)
-      yield itm
-  
+  res = None
+  if type(itterable) == type([]):
+    res = []
+    for itm in itterable:
+      if search(regex, str(itm)) != None:
+        res.append(itm)
+  elif type(itterable) == type({}):
+    res = {}
+    for itm in itterable:
+      if search(regex, str(itterable[itm])) != None:
+        res[itm] = itterable[itm]
+  return res
+
 def cat(file):
     #cat a file
     import os.system

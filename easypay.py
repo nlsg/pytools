@@ -65,14 +65,60 @@ import nls_util as nut
 import logging 
 logging.basicConfig(**nut.log_config)
 log = logging.warning
+import time as t
 
-log("hello log")
-from concurrent.futures import ThreadPoolExecutor as TPE
 results = []
+times = []
 
-with TPE(7) as tpe:
-  tpe
-# for im_p in nut.ls("easypay_assets/test/*bill*").read().split("\n"):
-#   results.append(easyocr.Reader(['en']).readtext(im_p))
+def ocr_func(img_path):
+  log(f"entered {img_path=}")
+  t1 = t.time()
+  res =  results.append(easyocr.Reader(['en']).readtext(img_path))
+  times.append(t.time()-t1)
+  log(f"executed in {t.time()-t1:.2f}s")
+  return res
+
+nut.listing((imgs := nut.ls("easypay_assets/*test0*").read().split("\n")))
+s("clear")
+imgs.pop()
+nut.listing(imgs)
+
+nut.listing(imgs)
+for img in imgs:
+  s(f"sxiv {img}")
+  in_ = input("[r]emove [n]ext\n>")
+  if in_ == 'r':
+    s(f"rm {img}")
+
+for img_path in imgs:
+  results.append(ocr_func(img_path))
+results
+
+
+out_file = open("myfile.json", "w")
+import pandas as pd
+results[0][0][0]
+
+s("clear")
+df = pd.DataFrame(results[0])
+print(df)
+df.plot()
+help(df)
+plt.show()
+
+out_file.close()
+s("clear")
+for res in results:
+  nut.listing(res)
+
+# t_start = t.time()
+# for img_path in nut.ls("easypay_assets/test/*bill*").read().split("\n"):
+#   t1 = t.time()
+#   thread.start_new_thread(ocr_func, (img_path,))
+#   log(f"thread started in {t.time()-t1:.2f}s")
+
+log(f"all thread joined in {t.time()-t_start:.2f}s")
+# for img_path in nut.ls("easypay_assets/test/*bill*").read().split("\n"):
+#   results.append(easyocr.Reader(['en']).readtext(img_path))
 
 
