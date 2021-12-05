@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-from datetime import datetime as dt
 
 '''consts'''
 cli = {"RED"  : "\033[1;31m"
@@ -26,7 +25,7 @@ def ls_raw(directory):
   return os.popen(f"ls {directory}")
 def ls(directory):
   '''for raw popen output use ls_raw'''
-  ls(directory).read().split("\n")
+  return ls_raw(directory).read().split("\n")
 
 def quiet_exit(exit_code=0,msg="",*args,**kwargs):
   '''same as sys.exit() but gives no stdout'''
@@ -64,7 +63,9 @@ def int_input(fail_txt = "input has to be a number!", txt = "enter a number: ", 
       print(fail_txt)
   return in_
 
-def time_stamp(format="%d-%b_%H-%M"): return dt.now().strftime(format)
+def time_stamp(format="%d-%b_%H-%M"): 
+  from datetime import datetime as dt
+  return dt.now().strftime(format)
 
 def grep(regex, itterable):
   '''

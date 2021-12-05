@@ -76,34 +76,28 @@ def ocr_func(img_path):
   log(f"executed in {t.time()-t1:.2f}s")
   return res
 
-nut.listing((imgs := nut.ls("easypay_assets/*test0*").read().split("\n")))
-imgs.pop()
-nut.listing(imgs)
+from multiprocessing import Process
 
-from multiprocessing import Pool
-nut.listing(nut.grep("*", nut.ls("easypay_assets/*").read().split("\n")))
-def f(x):
-  return x*x
+imgs = nut.listing(nut.grep("test[^_:]", nut.ls("easypay_assets/*")))
 
-s("clear")
-result = it = res = None
-with Pool(processes=4) as pool:         # start 4 worker processes
-  result = pool.apply_async(f, (10,)) # evaluate "f(10)" asynchronously in a single process
-  print(result.get())        # prints "100" unless your computer is *very* slow
-  res = pool.map(f, range(10))       # prints "[0, 1, 4,..., 81]"
-  it = pool.imap(f, range(10))
-  print(next(it))                     # prints "0"
-  print(next(it))                     # prints "1"
-  print(it.next(timeout=1))           # prints "4" unless your computer is *very* slow
+def p_test_f(x,y):
+  with nut.Timer(f"func({x=}, {y=})"):
+    for i in range(x):
+      y+= x**y
+
+args1 = [(2,2),(3,3),(4,4)]
+
+with nut.Timer("Pool done"):
+  p1 = Process(target=p_test_f, args=(2,2))
 
 # t_start = t.time()
-# for img_path in nut.ls("easypay_assets/test/*bill*").read().split("\n"):
+# for img_path in nut.ls("easypay_assets/test/*bill*"):
 #   t1 = t.time()
 #   thread.start_new_thread(ocr_func, (img_path,))
 #   log(f"thread started in {t.time()-t1:.2f}s")
 
 #log(f"all thread joined in {t.time()-t_start:.2f}s")
-# for img_path in nut.ls("easypay_assets/test/*bill*").read().split("\n"):
+# for img_path in nut.ls("easypay_assets/test/*bill*"):
 #   results.append(easyocr.Reader(['en']).readtext(img_path))
 
 
