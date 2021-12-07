@@ -7,6 +7,7 @@ def send_message(msg,api_token="/py/nls_notify_bot.token"):
   msg -> message to send
   api_token -> filepath to a file containing the api token of the bot
   '''
+  print(api_token)
   import requests, os.path
   bot_token = open(os.path.expanduser('~') + api_token).read()[:-1]
 
@@ -22,14 +23,20 @@ if __name__ == "__main__":
   import sys
   import nls_util as nut
 
-  if len(sys.argv) == 2:
-    send_message(sys.argv[1])
-  elif len(sys.argv) == 3:
-    send_message(sys.argv[2], sys.argv[1])
-  else:
+  class UsageError(Exception): pass 
+  try:
+    if len(sys.argv) == 2:
+      if sys.argv[1] == "-h" or sys.argv[1] == "--help": raise UsageError()
+      send_message(sys.argv[1])
+    elif len(sys.argv) == 3:
+      if sys.argv[1] == "-h" or sys.argv[1] == "--help": raise UsageError()
+      send_message(sys.argv[2], sys.argv[1])
+    else: raise UsageError()
+  except UsageError:  # where to goto
     usage = nut.cli["BOLD"] + "usage:" + nut.cli["RESET"] + f" {sys.argv[0]} "
     help_str  = usage + "[msg] - default api path=/py/nls_notify_bot.token\n"
-    help_str += usage + "[api-key-file] [msg] -  path to a file containing the api key of the telegram bot (relative to home directory)"
+    help_str += usage + "[api-key-file] [msg] -  path to a file containing the api key of the telegram bot (relative to home directory)\n"
+    help_str += "\n If the script does not work or throws errors, start your telegram bot first\n"
     print(help_str)
 
 

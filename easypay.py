@@ -7,97 +7,121 @@ import numpy as np
 import easyocr
 import matplotlib.pyplot as plt
 import ctypes
-
-with (c := nut.Curses()):
-  choice = 0
-  in_ = None
-  choices = ["a","bb","ccc","ddd","eee"]
-  max_y,max_x = c.stdscr.getmaxyx()
-  status_bar = c.stdscr.subwin(3,max_x,max_y-3,0)
-
-  def update_bar(status_bar_str):
-    status_bar.clear()
-    status_bar.addstr(1, 1, status_bar_str, c.curses.A_BOLD)
-    status_bar.box()
-    status_bar.refresh()
-
-  keys = {
-    "k":["move up"   ]
-    ,"j":["move down"]
-    ,"?":["show help"]
-    ,"h":["show help"]
-    ,"q":["quit"]
-    }
-
-  def keybindings_help():
-    help = c.stdscr.subwin(max_y//2, max_x//2,max_y//4,max_x//4)
-    y,x =help.getyx()
-    help.box()
-    help.addstr(0,1,"<keybindings>")
-    i =1
-    for key in keys:
-      help.addstr(i,1,str(key) + " - " + str(keys[key][0]))
-      i += 1
-
-    in_ = help.getch()
-    help.clear()  
-
-  while True:
-    # str = "print('tr') if False else choices"
-    # eval(str)
-    if in_ == 'k' and choice > 0                : choice -= 1
-    elif in_ == 'j' and choice < len(choices)-1 : choice += 1
-    elif in_ == 'q'                             : break
-    elif in_ == 'm'                             : keybindings_help()
-    elif in_ == '?'                             : keybindings_help()
-    elif in_ == 'h'                             : keybindings_help()
-    for i in range(len(choices)):
-      c.stdscr.addstr(i,0,choices[i], c.curses.A_REVERSE if choice == i else c.curses.A_NORMAL)
-
-    update_bar(f"{in_=} | {max_x=}, {max_y=} | {choice=}, {choices[choice]=}")
-    in_ = c.stdscr.getkey()
-
-s("clear")
-from PIL import Image
 import nls_util as nut
 import logging 
 logging.basicConfig(**nut.log_config)
 log = logging.warning
 import time as t
+import json
 
-results = []
-times = []
-
-def ocr_func(img_path):
+def ocr_func(queue, img_path):
   log(f"entered {img_path=}")
   t1 = t.time()
-  res =  results.append(easyocr.Reader(['en']).readtext(img_path))
-  times.append(t.time()-t1)
+  res =  easyocr.Reader(['en']).readtext(img_path)
   log(f"executed in {t.time()-t1:.2f}s")
-  return res
+  nut.notify("ocr_func", f"executed in {t.time()-t1:.2f}s")
+  try:
+    queue.put(res)
+  except:
+    log("queue.put() exception occurred")
+    nut.notify("ocr_func_error", "queue.put() exception occurred")
+    return res
 
-from multiprocessing import Process
+def standard_handler(arg_list, func=ocr_func):
+  res = []
+  tms = []
+  for arg in arg_list:
+    log(f"started func with {arg}")
+    nut.notify("standard_hnd", f"started func with {arg}")
+    t1 = t.time()
+    res.append(func(None, arg))
+    tms.append((tt :=t.time()-t1))
+    log(f"{arg} took {tt:.2f}")
+    nut.notify("standard_hnd", f"{arg} took {tt:.2f}")
+  return res, tms
 
-imgs = nut.listing(nut.grep("test[^_:]", nut.ls("easypay_assets/*")))
+cont = nut.ls("easypay_assets/test/*")
+nut.listing((imgs := nut.grep("bill", cont)))
 
-def p_test_f(x,y):
-  with nut.Timer(f"func({x=}, {y=})"):
-    for i in range(x):
-      y+= x**y
+def perform_ocr(paths_to_img_files):
+  '''returns two objects: ocr_results, time'''
+  with nut.Timer():
+    return standard_handler(paths_to_img_files)
 
-args1 = [(2,2),(3,3),(4,4)]
+def pack_results(raw_results, times, paths):
+  essence = []
+  for i in range(len(raw_results)):#for testing object
+    print(f"{i=}")
+    data = ""
+    for i_ in range(len(raw_results[i])):#for identified textobject
+      print(f"{i_=}")
+      data += raw_results[i][i_][1]
+      data += ", "
+      log(f"({i}){data=}")
+    essence.append({
+      "time":times[i]
+      ,"data":data
+      ,"path":paths[i]
+      })
+    return essence
 
-with nut.Timer("Pool done"):
-  p1 = Process(target=p_test_f, args=(2,2))
+essence = []
+# res, tms = perform_ocr(imgs)
+essence = pack_results(res, tms, imgs)
+nut.listing(essence)
+nut.listing(res)
+nut.listing(tms)
+nut.listing(tms)
 
-# t_start = t.time()
-# for img_path in nut.ls("easypay_assets/test/*bill*"):
-#   t1 = t.time()
-#   thread.start_new_thread(ocr_func, (img_path,))
-#   log(f"thread started in {t.time()-t1:.2f}s")
+essence = []
+for i in range(len(res)):#for testing object
+  print(f"{i=}")
+  data = ""
+  for i_ in range(len(res[i])):#for identified textobject
+    print(f"{i_=}")
+    data += res[i][i_][1]
+    data += ", "
+    log(f"({i}){data=}")
+  essence.append({
+    "time":tms[i]
+    ,"data":data
+    ,"path":imgs[i]
+    })
 
-#log(f"all thread joined in {t.time()-t_start:.2f}s")
-# for img_path in nut.ls("easypay_assets/test/*bill*"):
-#   results.append(easyocr.Reader(['en']).readtext(img_path))
+def void_f():
+  with open(f"essence.json", "w") as f:
+    json.dump(essence, f)
+    
+    
+    void_f()
 
+essence = pack_results(res, tms, imgs)
+len(essence)
+
+import pandas as pd
+df = pd.DataFrame(essence)
+
+len(res)
+def get_test_data(file_path="essence.json"):
+  data = []
+  with open(file_path) as f:
+    data = json.load(f)
+  return data
+
+# def test_ocr(packed_data):
+#   packed_data["data"]
+
+# python load json file 
+# test_ocr((data :=get_test_data()))
+
+# def json_dump_int64(data, file_path):
+#   from json import dump
+#   def np_encoder(object):
+#     if isinstance(object, np.generic):
+#       return object.item()
+#   with open(file_path, "w") as f:
+#     json.dump(data,f, default=np_encoder)
+
+# for i in range(len(res)):
+#   json_dump_int64(res[i],f"ocr_data0{i+1}.json")
 

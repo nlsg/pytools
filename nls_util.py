@@ -14,6 +14,13 @@ cli = {"RED"  : "\033[1;31m"
 log_config = {
     "format":"[%(asctime)s|%(filename)s|%(funcName)s|%(lineno)d]> %(message)s"
     ,"datefmt":"%I:%M"}
+''' 
+logging.basicConfig(**nut.log_config)
+log = logging.warning
+'''
+
+
+
 
 '''util funct'''
 def ls_raw(directory): 
