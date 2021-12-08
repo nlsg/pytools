@@ -3,4 +3,4 @@
 push.ini
 easypay_assets/*.jpg
 easypay_assets/test/*
-a_ocr*.json
+ocr*.json
