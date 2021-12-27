@@ -1,15 +1,15 @@
 #!/usr/bin/python3
 '''a simple wrapper arround the telegram api'''
 
-def send_message(msg,api_token="/py/nls_notify_bot.token"):
+def send_message(msg,token_file="/py/nls_notify_bot.token"):
   '''
   send a message from a telegram bot
   msg -> message to send
-  api_token -> filepath to a file containing the api token of the bot
+  token_file -> filepath to a file containing the api token
   '''
-  print(api_token)
+  print(token_file)
   import requests, os.path
-  bot_token = open(os.path.expanduser('~') + api_token).read()[:-1]
+  bot_token = open(os.path.expanduser('~') + token_file).read()[:-1]
 
   req_str = f"https://api.telegram.org/bot{bot_token}/getUpdates"
   bot_chat_id  = requests.get(req_str).json()["result"][0]["message"]["from"]["id"]

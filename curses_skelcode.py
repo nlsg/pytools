@@ -19,7 +19,7 @@ with (c := nut.Curses()):
     status_bar.box()
     status_bar.refresh()
 
-  keys = {
+  key_bindings = {
     "k":["move up"   ]
     ,"j":["move down"]
     ,"?":["show help"]
@@ -28,17 +28,16 @@ with (c := nut.Curses()):
     }
 
   def keybindings_help():
-    help = c.stdscr.subwin(max_y//2, max_x//2,max_y//4,max_x//4)
-    y,x =help.getyx()
-    help.box()
-    help.addstr(0,1,"<keybindings>")
+    help_win = c.stdscr.subwin(max_y//2, max_x//2,max_y//4,max_x//4)
+    y,x = help_win.getyx()
+    help_win.box()
+    help_win.addstr(0,1,"<keybindings>")
     i =1
-    for key in keys:
-      help.addstr(i,1,str(key) + " - " + str(keys[key][0]))
+    for key in key_bindings:
+      help_win.addstr(i,1,str(key) + " - " + str(key_bindings[key][0]))
       i += 1
-
-    in_ = help.getch()
-    help.clear()  
+    in_ = help_win.getch()
+    help_win.clear()  
 
   while True:
     # str = "print('tr') if False else choices"
@@ -49,10 +48,10 @@ with (c := nut.Curses()):
     elif in_ == 'm'                             : keybindings_help()
     elif in_ == '?'                             : keybindings_help()
     elif in_ == 'h'                             : keybindings_help()
+
     for i in range(len(choices)):
       c.stdscr.addstr(i,0,choices[i], c.curses.A_REVERSE if choice == i else c.curses.A_NORMAL)
 
     update_bar(f"{in_=} | {max_x=}, {max_y=} | {choice=}, {choices[choice]=}")
     in_ = c.stdscr.getkey()
-
 

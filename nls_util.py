@@ -13,7 +13,7 @@ cli = {"RED"  : "\033[1;31m"
 
 log_config = {
     "format":"[%(asctime)s|%(filename)s|%(funcName)s|%(lineno)d]> %(message)s"
-    ,"datefmt":"%I:%M"}
+    ,"datefmt":"%I:%M", "level":"logging.INFO"}
 ''' 
 logging.basicConfig(**nut.log_config)
 log = logging.warning
@@ -114,18 +114,30 @@ class Curses():
     import curses 
     self.curses = curses
     self.stdscr = curses.initscr()
+    self.max_y, self.max_x = self.stdscr.getmaxyx()
   def __enter__(self):
     self.curses.noecho()
     self.curses.cbreak()
     self.stdscr.keypad(True)
     self.curses.curs_set(0)
+  def popup(self, title_str=None, coords = ()):
+    '''returns a popup_window which is nicely placed on the stdscr''' 
+    popup_w = None
+    if len(coords) < 4:
+      popup_w = self.stdscr.subwin(self.max_y//2, self.max_x//2,self.max_y//4,self.max_x//4)
+    else: 
+      popup_w = self.stdscr.subwin(*coords)
+    popup_w.clear()
+    popup_w.box()
+    if title_str != None:   popup_w.addstr(0,1,title_str)
+    return popup_w
   def __exit__(self, type, value, traceback):
     self.curses.nocbreak()
     self.stdscr.keypad(False)
     self.curses.echo()
     self.curses.curs_set(1)
     self.curses.endwin()
-
+  
 
 class Timer():
   def __init__(self, name = ""):
@@ -170,3 +182,5 @@ def func_info(func, **kwargs):
     return ret
   return dec_func
 
+
+# list_to_dict = {i : list_[i] for i in range(len(list_))}
