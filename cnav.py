@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-from nls_util import notify
+import nls_util as nut
+notify = nut.notify
 class Nav():
   def __init__(self):
     self.opts = {
@@ -15,6 +16,7 @@ class Nav():
     self.chars_to_escape = ['[',']','\\']
     self.title_str = "<cnav>"
     self.logfile = "cnav.log"
+    self.c = nut.Curses()
 
   def log_to_file(self, log_data="", title=""):
     with (f := open(f"{self.logfile}", "a")):
@@ -25,15 +27,18 @@ class Nav():
       notify(f"log", "log written!")
 
   def navigate(self, iterable):
+    self.c.__enter__()
     self.history = [iterable]
     t = type(iterable)
     if t == dict:
-      return self.hnd_pointer(iterable)
+      result = self.hnd_pointer(iterable)
     elif t == list:
       list_to_dict = {i : iterable[i] for i in range(len(iterable))}
-      return self.hnd_pointer(list_to_dict)
+      result = self.hnd_pointer(list_to_dict)
     elif t == str or t == int or t == bool:
       print("can't iterate anymore")
+    self.c.__exit__(None,None,None)
+    return result
 
   def recursion_hndl(self, iterable):
     self.history.append(iterable)
@@ -50,171 +55,171 @@ class Nav():
         return self.history[len(self.history)-1]
 
   def userinput(self, choices):
-    input()
-    from nls_util import Curses
     choice = 0
     choices_ = choices
-    with (c := Curses()):
 
-      def ranger_help(help_dict, coords):
-        help_w = c.popup("<help>", coords)
-        y,x = help_w.getmaxyx()
-        i = 0
-        for k in help_dict:
-          help_w.addstr(i+2,2,f"{k}\t{help_dict[k]}")
-          if i == y-3: break
-          i += 1
-        help_w.refresh()
-        help_w.getch()
-        help_w.clear()
+    c = self.c
 
-      self.len_resdir = len(choices)-1
-      in_ = None 
-      info = {}
-      info.update(self.keybinding_info)
-      info.update(self.opts)
-      info["recursion_counter"] = self.n_rec
-      offset = 0
-      search_mode = False
-      search_query = ""
+    # with (c := Curses()):
+    def ranger_help(help_dict, coords):
+      help_w = c.popup("<help>", coords)
+      y,x = help_w.getmaxyx()
+      i = 0
+      for k in help_dict:
+        help_w.addstr(i+2,2,f"{k}\t{help_dict[k]}")
+        if i == y-3: break
+        i += 1
+      help_w.refresh()
+      help_w.getch()
+      help_w.clear()
 
-      while True:
-        keys = []
-        if (choices_type := type(choices)) == list: 
-          keys = [i  for i in range(len(choices))]
-          choices_type = "list"
-        else:
-          keys = list(choices.keys())
+    self.len_resdir = len(choices)-1
+    in_ = None 
+    info = {}
+    info.update(self.keybinding_info)
+    info.update(self.opts)
+    info["recursion_counter"] = self.n_rec
+    offset = 0
+    search_mode = False
+    search_query = ""
 
-        c.stdscr.clear()
-        pop_w = c.popup(title_str=self.title_str, coords=((c.max_y-4)//2,c.max_x-4,2,2))
-        info_w = c.popup(title_str="<info>",   coords=((c.max_y-4)//2,c.max_x-4,(c.max_y//2),2))
-        y,x = pop_w.getmaxyx()
-        screen_fit = y-3
-        
-        # draw info_w (main window)
-        for i in range(len(choices)):
-          ioff = i + offset
-          try:
-            type_info = str(type(choices[keys[ioff]])).split("'")[1]
-          except IndexError as e :
-            self.log_to_file(f"\n(98)IndexError={e}\n{i=}, {ioff=}\n{len(choices)=}, {len(keys)=}")
-            type_info = "NA"
+    while True:
+      keys = []
+      if (choices_type := type(choices)) == list: 
+        keys = [i  for i in range(len(choices))]
+        choices_type = "list"
+      else:
+        keys = list(choices.keys())
 
-          print_str = f"({type_info}) "
-          if self.opts["print_list_numbers"] == False:# if  type_info == "list":
-            pass
-          else:
-            if type(keys[choice]) == int:
-              print_str += "0" if int(keys[choice]) < 10 else ""
-            print_str += f"{keys[ioff]} - "
-          column_rest = x - (len(print_str) +5)
-          print_str += f"{str(choices[keys[ioff]])[:column_rest]}"
-          print_str += "..." if len(str(choices[keys[ioff]])) >= column_rest else ""
-          info["print_str"] = len(print_str)
-          pop_w.addstr(i+1,1,print_str, c.curses.A_REVERSE if choice == ioff else c.curses.A_NORMAL)
-          if i == y-3: break
-
-        if search_mode or search_query != "":
-          try:
-            pop_w.addstr(y-1,1,f"({self.len_resdir})/{search_query}>",c.curses.A_BOLD if search_mode else c.curses.A_NORMAL)
-          except Error as e:
-            self.log_to_file(f"{e=}","Error while drawing search mode")
-
-        pop_w.refresh()
-        info["yx_pop_w"] = (y,x)
-        y,x = info_w.getmaxyx()
-        info["yx_info_w"] = (y,x)
-
-        # draw info_w (info window)
+      c.stdscr.clear()
+      pop_w = c.popup(title_str=self.title_str, coords=((c.max_y-4)//2,c.max_x-4,2,2))
+      info_w = c.popup(title_str="<info>",   coords=((c.max_y-4)//2,c.max_x-4,(c.max_y//2),2))
+      y,x = pop_w.getmaxyx()
+      screen_fit = y-3
+      
+      # draw info_w (main window)
+      for i in range(len(choices)):
+        ioff = i + offset
         try:
-          info_str  = f"{choice}/{len(choices)-1}|in: {in_}/{ord(in_)}"
-          info_str += f"|r: {self.n_rec}|sm: {search_mode}"
-          info_w.addstr(1,1,info_str)
+          type_info = str(type(choices[keys[ioff]])).split("'")[1]
+        except IndexError as e :
+          self.log_to_file(f"\n(98)IndexError={e}\n{i=}, {ioff=}\n{len(choices)=}, {len(keys)=}")
+          type_info = "NA"
 
-        except TypeError as e:
-          self.log_to_file(f"{e}","draw info_w")
+        print_str = f"({type_info}) "
+        if self.opts["print_list_numbers"] == False:# if  type_info == "list":
           pass
-        info_w.addstr(1,x//2,"| h,j,k,l -> move, q -> return")
-        for i in range(x-2):  info_w.addstr(2,1+i,"-")
-        info_w.addstr(2,2,f"<{keys[choice]}>")
+        else:
+          if type(keys[choice]) == int:
+            print_str += "0" if int(keys[choice]) < 10 else ""
+          print_str += f"{keys[ioff]} - "
+        column_rest = x - (len(print_str) +5)
+        print_str += f"{str(choices[keys[ioff]])[:column_rest]}"
+        print_str += "..." if len(str(choices[keys[ioff]])) >= column_rest else ""
+        info["print_str"] = len(print_str)
+        pop_w.addstr(i+1,1,print_str, c.curses.A_REVERSE if choice == ioff else c.curses.A_NORMAL)
+        if i == y-3: break
 
-        def str_splitter(str_, n): return [str_[i:i+n] for i in range(0, len(str_), n)]
-        preview_strs = str_splitter(str(choices[keys[choice]]).replace('\n', ' '),x-2)
-        for i in range(len(preview_strs)):
-          info_w.addstr(3+i,1,preview_strs[i])
-          if i == y-5: break
+      if search_mode or search_query != "":
+        try:
+          pop_w.addstr(y-1,1,f"({self.len_resdir})/{search_query}>",c.curses.A_BOLD if search_mode else c.curses.A_NORMAL)
+        except Error as e:
+          self.log_to_file(f"{e=}","Error while drawing search mode")
 
-        info_w.refresh()
-        if in_ != None:
-          in_ = pop_w.getkey()
-        info["key"] = in_
-        if search_mode == False:
-          if   in_ == 'k' and choice > 0:
-            if (choice-offset) == 0: 
-              offset -= 1
-            choice -= 1
-          elif in_ == 'j'  and choice < len(choices)-1 :
-            if (choice-offset) == screen_fit:
-              offset += 1
-            choice += 1
-          elif in_ == 'K':
-            if (choice-(screen_fit*2)) > 0:
-              choice -= screen_fit
-              offset -= screen_fit
-            else:
-              choice = offset = 0
-          elif in_ == 'J':
-            if (choice+(screen_fit*2)) < len(choices)-1:
-              choice += screen_fit
-              offset += screen_fit
-            else:
-              choice = len(choices)-1
-              offset = choice - screen_fit
-          elif in_ == '?': ranger_help(info, (len(info)*2,c.max_x-8,4,4))
-          elif in_ == '/': search_mode = True
-          elif in_ == None: in_ = 'k' ; continue
-          elif in_ in ['q', 'h', 'l', '\n']: break
+      pop_w.refresh()
+      info["yx_pop_w"] = (y,x)
+      y,x = info_w.getmaxyx()
+      info["yx_info_w"] = (y,x)
 
-        else: #search_mode
-          import re
-          choice = offset = 0
-          if ord(in_) == 127: #delete
-            search_query = search_query[:-1]
-            if len(search_query) == 0:
-              search_mode = False
-          elif ord(in_) == 27: #escape
-            search_query = ""
-            search_mode = False
+      # draw info_w (info window)
+      try:
+        info_str  = f"{choice}/{len(choices)-1}|in: {in_}/{ord(in_)}"
+        info_str += f"|r: {self.n_rec}|sm: {search_mode}"
+        info_w.addstr(1,1,info_str)
+
+      except TypeError as e:
+        self.log_to_file(f"{e}","draw info_w")
+        pass
+      info_w.addstr(1,x//2,"| h,j,k,l -> move, q -> return")
+      for i in range(x-2):  info_w.addstr(2,1+i,"-")
+      info_w.addstr(2,2,f"<{keys[choice]}>")
+
+      def str_splitter(str_, n): return [str_[i:i+n] for i in range(0, len(str_), n)]
+      preview_strs = str_splitter(str(choices[keys[choice]]).replace('\n', ' '),x-2)
+      for i in range(len(preview_strs)):
+        info_w.addstr(3+i,1,preview_strs[i])
+        if i == y-5: break
+
+      info_w.refresh()
+      if in_ != None:
+        in_ = pop_w.getkey()
+      info["key"] = in_
+      if search_mode == False:
+        if   in_ == 'k' and choice > 0:
+          if (choice-offset) == 0: 
+            offset -= 1
+          choice -= 1
+        elif in_ == 'j'  and choice < len(choices)-1 :
+          if (choice-offset) == screen_fit:
+            offset += 1
+          choice += 1
+        elif in_ == 'K':
+          if (choice-(screen_fit*2)) > 0:
+            choice -= screen_fit
+            offset -= screen_fit
           else:
-            search_query += in_
-          if in_ == '\n':
-            search_query = search_query[:-1]
-            in_ = '~'
-            search_mode = False
+            choice = offset = 0
+        elif in_ == 'J':
+          if (choice+(screen_fit*2)) < len(choices)-1:
+            choice += screen_fit
+            offset += screen_fit
           else:
-            res_dir = {}
-            choices = choices_
+            choice = len(choices)-1
+            offset = choice - screen_fit
+        elif in_ == '?': ranger_help(info, (len(info)*2,c.max_x-8,4,4))
+        elif in_ == '/': search_mode = True
+        elif in_ == None: in_ = 'k' ; continue
+        elif in_ in ['q', 'h', 'l', '\n']: break
 
-            if type(choices) == list:
-              choices = {i : choices[i] for i in range(len(choices))}
-            for k in choices:
-              search = ""
-              search = str(k) + str(choices[k])
-              # self.log_to_file(f"{type(k)=}, {type(choices)=}", "k is probably a dict")
-              try:
-                if re.search(search_query,search) != None:
-                  res_dir[k] = choices[k]
-              except re.error as e:
-                self.log_to_file(f"\nre.error={e}\n{k=}\n{search}")
-                res_dir = choices 
-                break
-            self.len_resdir = len(res_dir)
-            if self.len_resdir >= 1:
-              choices = res_dir
+      else: #search_mode
+        import re
+        choice = offset = 0
+        if ord(in_) == 127: #delete
+          search_query = search_query[:-1]
+          if len(search_query) == 0:
+            search_mode = False
+        elif ord(in_) == 27: #escape
+          search_query = ""
+          search_mode = False
+        else:
+          search_query += in_
+        if in_ == '\n':
+          search_query = search_query[:-1]
+          in_ = '~'
+          search_mode = False
+        else:
+          res_dir = {}
+          choices = choices_
 
-          pop_w.clear()  
-        info_w.clear()  
+          if type(choices) == list:
+            choices = {i : choices[i] for i in range(len(choices))}
+          for k in choices:
+            search = ""
+            search = str(k) + str(choices[k])
+            # self.log_to_file(f"{type(k)=}, {type(choices)=}", "k is probably a dict")
+            try:
+              if re.search(search_query,search) != None:
+                res_dir[k] = choices[k]
+            except re.error as e:
+              self.log_to_file(f"\nre.error={e}\n{k=}\n{search}")
+              res_dir = choices 
+              break
+          self.len_resdir = len(res_dir)
+          if self.len_resdir >= 1:
+            choices = res_dir
+
+        pop_w.clear()  
+      info_w.clear()  
     return choices[keys[choice]], info
 
 nav = Nav().navigate
@@ -239,7 +244,6 @@ class CNav(Nav):
     cwd = "/"
     Nav().log_to_file(f"{cwd}", "pre prep")
     self.history.append(prep_data(cwd))
-    input("pre while True")
     while True:
       self.title_str = f"<cnav@{cwd}"
       last_data = self.history[len(self.history)-1]
