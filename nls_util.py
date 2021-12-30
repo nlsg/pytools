@@ -42,7 +42,7 @@ def quiet_exit(exit_code=0,msg="",*args,**kwargs):
   sys.stderr = open('/dev/null', 'w')
   sys.exit(exit_code)
 
-def notify(title, msg, argstr = "", critical = False):
+def notify(title, msg = "", argstr = "", critical = False):
   '''send a notification thru notify-send package.'''
   import os
   if critical:
