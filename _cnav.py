@@ -4,13 +4,11 @@ notify = nut.notify
 class Nav():
   def __init__(self):
     # ui/ux related
-    self.c = nut.Curses()
     self.opts = {
        "print_list_numbers":True
       ,"endless_search_mode":True
       ,"horizontal_split":False
       ,"main_w_title":"<cnav>"
-      ,"hilight_attr":self.c.curses.A_REVERSE
       }
     self.keybinding_info = {
        "j, k":" -> Down, Up"
@@ -18,10 +16,10 @@ class Nav():
       ,"q"   :" -> quit and return selected item"
       }
     self.n_rec = 1
-    self.visual_markpoint = 0
     self.break_list = ['q', 'h', 'l', '\n',"KEY_LEFT","KEY_RIGHT"]
     self.hnd_pointer = self.recursion_hndl
     self.logfile = "cnav.log"
+    self.c = nut.Curses()
     self.mode = "normal"
 
   def log(self, log_data="", title=""):
@@ -60,7 +58,7 @@ class Nav():
   def recursion_hndl(self, iterable):
     self.history.append(iterable)
     while True:
-      choice, info = self.get_choice(self.history[-1])
+      choice, info = self.get_choice(self.history[len(self.history)-1])
       if info["key"] == 'h' and len(self.history) > 1:
         self.history.pop()
         self.n_rec -= 1
@@ -68,23 +66,18 @@ class Nav():
       else:
         self.history.append(choice)
         self.n_rec += 1
-      if info["sr"][0] != info["sr"][1]:
-        self.log("returnd range")
       if (t := type(choice)) != dict and t != list or info["key"] == 'q':
-        return self.history[-1]
+        return self.history[len(self.history)-1]
 
   def get_choice(self, choices, preview:list=[]):
     c = self.c
 
-    def str_splitter(str_, n): 
-      return [str_[i:i+n] for i in range(0, len(str_), n)]
-       
     def ranger_help(help_dict, coords):
       help_w = c.popup("<help>", coords)
       y,x = help_w.getmaxyx()
       i = 0
       for k in help_dict:
-        help_w.addstr(i+2,2,f"{k}\t{help_dict[k]}".lstrip())
+        help_w.addstr(i+2,2,f"{k}\t{help_dict[k]}")
         if i == y-3: break
         i += 1
       help_w.refresh()
@@ -120,39 +113,9 @@ class Nav():
     user_line = ""
     skip_input_once = False
 
-    def construct_main_w():
-      selected_range = (choice,choice)
-      if self.mode == "visual":
-        if choice <= self.visual_markpoint:
-          selected_range = (choice, self.visual_markpoint)
-        else:
-          selected_range = (self.visual_markpoint, choice)
-      info["sr"] = str(selected_range)
-      main_strs = [] # contains str or (str,attr) to be drawn for addstr function
-      for i in range(len(choices)):
-        ioff = i + offset
-        type_info = str(type(choices[keys[ioff]])).split("'")[1]
-        print_str = f"({type_info}) "
-        if self.opts["print_list_numbers"]:
-          if type(keys[choice]) == int:
-            print_str += "0" if int(keys[choice]) < 10 else ""
-          print_str += f"{keys[ioff]} - "
-        print_str += str(choices[keys[ioff]]).rstrip()
-        if len(print_str) > x-2:
-          print_str = print_str[:x-5] + "..."
-        # if choice == ioff:
-        if selected_range[0] <= ioff <= selected_range[1]:
-          main_strs.append([print_str, self.opts["hilight_attr"]])
-        else:
-          main_strs.append(print_str)
-        if i == y-3: break
-      if (self.mode == "search" or user_line != "") and self.mode != "command":
-        main_strs.append([y-1,1,f"({self.len_resdir})/{user_line} >",c.curses.A_BOLD if self.mode == "search" else c.curses.A_NORMAL])
-      elif self.mode == "command": 
-        main_strs.append([y-1,1,f"($):{user_line} >",c.curses.A_BOLD])
-      return main_strs
-
     while True:
+      keys = []
+      # drawing is just implemented for dicts ...
       if type(choices) == list: 
         keys = [i  for i in range(len(choices))]
       else:
@@ -165,22 +128,47 @@ class Nav():
       screen_fit = y-3
       
       # draw main_w (main window)
-      c.render_win(c.main_w, construct_main_w(), info["main_w_title"])
-      
+      c.main_w.clear()
+      for i in range(len(choices)):
+        ioff = i + offset
+
+        type_info = str(type(choices[keys[ioff]])).split("'")[1]
+        print_str = f"({type_info}) "
+
+        if self.opts["print_list_numbers"]:
+          if type(keys[choice]) == int:
+            print_str += "0" if int(keys[choice]) < 10 else ""
+          print_str += f"{keys[ioff]} - "
+
+        column_rest = x - (len(print_str) +5) # 5 because boarders on both sides + len("...")
+        print_str += str(choices[keys[ioff]])[:column_rest]
+        print_str += "..." if len(str(choices[keys[ioff]])) >= column_rest else ""
+        c.main_w.addstr(i+1,1,print_str, c.curses.A_REVERSE if choice == ioff else c.curses.A_NORMAL)
+        if i == y-3: break
+
+      if (self.mode == "search" or user_line != "") and self.mode != "command":
+        c.main_w.addstr(y-1,1,f"({self.len_resdir})/{user_line} >",c.curses.A_BOLD if self.mode == "search" else c.curses.A_NORMAL)
+      elif self.mode == "command": 
+        c.main_w.addstr(y-1,1,f"($):{user_line} >",c.curses.A_BOLD)
+
+      c.main_w.refresh()
       info["yx_pop_w"] = (y,x)
       y,x = c.info_w.getmaxyx()
       info["yx_info_w"] = (y,x)
 
+      # draw info_w (info window)
       try:
         user_key_ord = ord(user_key)
       except TypeError as e:
         user_key_ord = "-"
-        self.log(f"{e=}\n{user_key=}","user key is special char")
+        self.log(f"{e=}","user key is special char")
 
+      def str_splitter(str_, n): 
+        return [str_[i:i+n] for i in range(0, len(str_), n)]
+       
       info_str  = f"{choice}/{len(choices)-1}|in: {user_key}/{user_key_ord}"
-      info_str += f"|r: {self.n_rec}|sm: {self.mode}|c: {choice}, o: {offset}"
+      info_str += f"|r: {self.n_rec}|sm: {self.mode}"
       line_str = ""
-      info_str = str_splitter(info_str,x-2)[0]
       try:
         key_str = f"<{keys[choice]}>"
       except IndexError:
@@ -202,22 +190,19 @@ class Nav():
           preview_strs = str_splitter(str(choices[keys[choice]]).replace('\n', ' '),x-2)
 
       with c.render(c.info_w) as scr:
-        scr.box()
-        scr.addstr(1,1,info_str)
-        scr.addstr(2,1,line_str)
-        scr.addstr(0,1,key_str)
+        c.info_w.box()
+        c.info_w.addstr(1,1,info_str)
+        c.info_w.addstr(1,x//2,"| h,j,k,l -> move, q -> return")
+        c.info_w.addstr(2,1,line_str)
+        c.info_w.addstr(0,1,key_str)
         for i in range(len(preview_strs)):
           c.info_w.addstr(3+i,1,preview_strs[i])
           if i == y-5: break
 
+      c.info_w.refresh()
       # get user_key
-      self.log(f"{user_key=}","about to get key")
       if user_key != None and skip_input_once == False:
-        try:
-          user_key = c.stdscr.getkey()
-        except Exception as e:
-          self.log(f"{e=}", "get key error")
-        self.log(f"{user_key=}","got key")
+        user_key = c.stdscr.getkey()
       else:
         skip_input_once = False
       info["key"] = user_key
@@ -225,15 +210,16 @@ class Nav():
       can_scroll_up   = lambda:choice > 0
       can_scroll_down = lambda:choice < len(choices)-1 
       def scroll_up(c=choice,o=offset):
-          if (c-o) == 0: o -= 1
+          if (c-o) == 0: 
+            o -= 1
           c -= 1
           return c,o
       def scroll_down(c=choice,o=offset,sc=screen_fit):
-          if (c-o) == sc: o += 1
+          if (c-o) == sc:
+            o += 1
           c += 1
           return c,o
 
-      self.log(f"{self.mode}","about to evalute key")
       if self.mode == "normal":
         if   user_key in ['k',"KEY_UP"] and can_scroll_up():
           choice, offset = scroll_up()
@@ -255,9 +241,9 @@ class Nav():
         elif user_key == '?': ranger_help(info, (len(info)*2,c.max_x-8,4,4))
         elif user_key == '/': self.mode = "search"
         elif user_key == ':': self.mode = "command"
-        elif user_key == 'v': self.mode = "visual"; self.visual_markpoint = choice
         elif user_key == None: user_key = 'k' ; continue
         elif user_key in self.break_list: break
+
       elif self.mode == "search":
         import re
         user_key, user_line = handle_line_input(user_key, user_line)
@@ -300,27 +286,11 @@ class Nav():
           self.mode = "normal"
           info["cmd"] = user_line[:-1]
           break
-      elif self.mode == "visual":
-        if user_key in ["^[","\n","l","h","v"]:
-          self.mode = "normal"
-          if user_key == "\n": break
-        elif user_key in["KEY_UP", "k"] and can_scroll_up():
-          choice, offset = scroll_up()
-        elif user_key in ["KEY_DOWN", "j"] and can_scroll_down():
-          choice, offset = scroll_down()
-        elif user_key == '?': ranger_help(info, (len(info)*2,c.max_x-8,4,4))
 
-    info["choice"] = choice
     self.log(f"{choice=}\n{choices[keys[choice]]=}","get_choice return ->")
+    return choices[keys[choice]], info
 
-    ret = choices[keys[choice]]
-    if info["sr"][0] != info["sr"][1]:
-      for i in range(info["sr"][0],info["sr"][1]):
-        self.log(f"{i=}")
-      # return [choices[keys[choice]][i] for i in range(*info["sr"])], info
-
-    return ret, info
-
+nav = Nav().navigate
 
 from os import popen
 def prep_data(cwd):
@@ -342,45 +312,23 @@ class CNav(Nav):
       self.opts["main_w_title"] = f"<cnav@{cwd}"
       self.log(f"{cwd=}","prep data")
       dir_content = []
-      dir_info = []
-      it = 0
-      for i in (data := prep_data(cwd)):
-        it += 1
+      for i in prep_data(cwd):
         try:
-          cwd_ = cwd + "/" + "".join(i[9:]).rstrip()
-          if i[1][0] == 'd':
-            prog = "ls -a"
-          elif i[1][0] == '-':
-            prog = "head -n 4"
-          try:
-            pop = popen(f"{prog} {cwd_}").read()
-          except UnicodeDecodeError as e:
-            self.log(f"{e=}","popen(head) decode error")
-          dir_content.append(" | ".join([
-            i[1]
-            ,*i[9:]
-            ]))
-          dir_info.append("\n".join([
-            i[1]
-            ," ".join([i_.rstrip() for i_ in i[9:]]).strip()
-            ," ".join(i[6:9])
-            ,pop
-            ]))
+          i = " | ".join([i[1],i[9]])
+          dir_content.append(i)
         except IndexError:
           break
-      choice, info = self.get_choice(dir_content,dir_info)
-      self.log(f"{data[info['choice']]=}","data reconstruction")
+      choice, info = self.get_choice(dir_content,["qb\nc\ndef \nWORKING!",])
       choice  = choice.split("|")
       choice[-1] = choice[-1].replace(" ","")
 
       if info["key"] in ['h',"KEY_LEFT"] or choice[-1] == "..":
         self.n_rec -= 1
-        cwd = '/'.join(cwd.split('/')[:-1])
-        if cwd == "": cwd = "/"
+        cwd = cwd.split('/')
+        cwd = '/'.join(cwd[:-1])
         continue
       elif choice[-1] != ".":
         cwd += ("/" + choice[-1].replace(" ",""))
-        # cwd += ("/" + "".join(data[info["choice"]][9:]).split(" ")[-1])
         self.n_rec += 1
 
       self.log(f"{choice[0]=}", "determing type")
@@ -391,6 +339,7 @@ class CNav(Nav):
         self.log("","is file")
       else:
         self.log("","is smt. else")
+
 
       if "cmd" in info:
         from os import system
@@ -411,62 +360,39 @@ class CNav(Nav):
           system(cmd)
           self.c.__enter__()
             
+
       elif info["key"] == '~':
         cwd = popen("echo $HOME").read()[:-1]
 
       if (t := type(choice)) != dict and t != list or info["key"] == 'q':
         return choice
 
-def fm_test():
-  nav = CNav()
-  nav.hnd_pointer = nav.file_manager_hnd
-  nav.opts["print_list_numbers"] = False
+nav = CNav()
+nav.hnd_pointer = nav.file_manager_hnd
+nav.opts["print_list_numbers"] = False
 
-  data = prep_data(None)
-  print(nav.navigate(data))
+data = prep_data(None)
+print(nav.navigate(data))
 
-def stdin_to_list():
-  lines = []
-  from ast import literal_eval
-  from sys import exit, path
-  import os
-  path.insert(1, '/home/nls/py/pytools')
-  import nls_util as nut
-  with open(0) as stdin:
-    if not (is_tty := stdin.isatty()):
-      lines = [ ln for ln in stdin.readlines()]
-    else:
-      lines = None
-
-  if lines == None:
-    return None
-  res = []
-  for ln in lines:
-    try:
-      res.append(list(literal_eval(ln)))
-    except ValueError as e:
-      print(f"{e=}\n{ln=}")
-  nut.info(res)
-  return res
-
-if __name__ == "__main__":
-  from os import dup2
-  obj = stdin_to_list()
-  tty=open("/dev/tty")
-  dup2(tty.fileno(), 0)
-  if obj == None:
-    print("no stdin")
-  nav = Nav()
-  nav.opts["endless_search_mode"] = False
-  print(nav.navigate(obj))
-  # nav.navigate([123,12,12,"eqwe","asdv",[12,"de",["as",12,43],23],12])
 
 # pseudo code "cnav":
 # | 1 | d | get cwd                    |
 # | 2 | d | get selection from nav     |
 # | 3 |   | if selection == '../' or h | cwd -- |
-# | 5 |   | else cwd = cwd + selection |
 # | 4 |   | if selection is dir        |
+# | 5 |   | else cwd = cwd + selection |
 # | 6 |   | if selection is file       |
 # | 7 |   | preview file               |
 
+'''
+help(nav.c.stdscr.getkey)
+with (c := nut.Curses()):
+  w = c.popup(title_str="tst", coords=(c.max_y-2,c.max_x-4,1,2))
+  while True:
+    in_ = w.getkey()
+    if in_ == '\n': break
+    w.clear()
+    w.box()
+    w.addstr(1,1,in_)
+    w.refresh()
+'''

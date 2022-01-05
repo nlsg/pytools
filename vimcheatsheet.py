@@ -1,15 +1,24 @@
 #!/usr/bin/python3
-import sys, os
-def get_url(args):
-  url = "+".join(args)
-  url = url.replace(" ","+")
-  if "://" not in url:
-    url = "cht.sh/python/" + url 
-  else:
-    url = args[0]
-  return url
+from os  import system
+from sys import exit, argv
 
 if __name__ == "__main__":
-  url = get_url(sys.argv[1:])
+  usage = f"usage: {argv[0]} language your question ..."
+  try:
+    lang = argv[1]
+    query = []
+    for arg in argv[2:]:
+      if arg[0] == "/":
+        lang = arg
+        query = []
+      else:
+        query.append(arg)
+
+    if len(query) == 0:
+      raise IndexError
+    url = ("cht.sh/" + lang + "/" + "+".join(query)).replace("//", "/")
+  except IndexError:
+    print(usage)
+    exit(1)
   print(f"curl {url}")
-  os.system(f"curl {url}")
+  system(f"curl {url}")

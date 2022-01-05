@@ -23,6 +23,22 @@ log = logging.warning
 
 
 '''util funct'''
+def info(obj, name="", print_obj=True):
+  if name != "": print("name: ", name)
+  if print_obj:
+    try:
+      print("obj: ", obj)
+    except:
+      print("obj: N/A")
+  try:
+    print("len: ", len(obj))
+  except:
+    print("len: N/A")
+  try:
+    print("type: ", type(obj))
+  except:
+    print("type: N/A")
+
 def ls_raw(directory): 
   '''list content of a dir
   returns popen object
@@ -109,6 +125,7 @@ def listing(obj):
       print(f"[{i}] -> {obj}")
 
 '''context managers'''
+from contextlib import contextmanager 
 class Curses():
   def __init__(self):
     import curses 
@@ -131,6 +148,32 @@ class Curses():
     popup_w.box()
     if title_str != None:   popup_w.addstr(0,1,title_str)
     return popup_w
+
+  @contextmanager
+  def render(self, wnd):
+    #simple clear -> do xy -> refresh contextmanager
+    wnd.clear()
+    try:
+      yield wnd
+    finally:
+      wnd.refresh()
+  def render_win(self, win,content_list,title="",y_start=1):
+    '''
+    each contentl
+    '''
+    with self.render(win) as scr:
+      scr.box()
+      scr.addstr(0,1,title)
+      for s in content_list:
+        if type(s) == list:
+          if type(s[0]) == int:
+            scr.addstr(*s)
+            continue
+          else:
+            scr.addstr(y_start,1, *s)
+        else:
+          scr.addstr(y_start,1, s)
+        y_start += 1
   def __exit__(self, type, value, traceback):
     self.curses.nocbreak()
     self.stdscr.keypad(False)
