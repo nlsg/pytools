@@ -5,4 +5,4 @@
   | sort -rg \
   | sed '/^0/d' \
   | awk '{print "["$0}' \
-  | cnav.py
+  | cnav.py 

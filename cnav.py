@@ -68,8 +68,8 @@ class Nav():
       else:
         self.history.append(choice)
         self.n_rec += 1
-      if info["sr"][0] != info["sr"][1]:
-        self.log("returnd range")
+      if info["sr"][0] != info["sr"][1] and info["key"] == "q":
+        return self.history[-1]
       if (t := type(choice)) != dict and t != list or info["key"] == 'q':
         return self.history[-1]
 
@@ -127,7 +127,7 @@ class Nav():
           selected_range = (choice, self.visual_markpoint)
         else:
           selected_range = (self.visual_markpoint, choice)
-      info["sr"] = str(selected_range)
+      info["sr"] = selected_range
       main_strs = [] # contains str or (str,attr) to be drawn for addstr function
       for i in range(len(choices)):
         ioff = i + offset
@@ -146,10 +146,16 @@ class Nav():
         else:
           main_strs.append(print_str)
         if i == y-3: break
+      if self.mode == "normal":
+        main_strs.append([y-1,1,f"({self.len_resdir})"])
       if (self.mode == "search" or user_line != "") and self.mode != "command":
         main_strs.append([y-1,1,f"({self.len_resdir})/{user_line} >",c.curses.A_BOLD if self.mode == "search" else c.curses.A_NORMAL])
       elif self.mode == "command": 
         main_strs.append([y-1,1,f"($):{user_line} >",c.curses.A_BOLD])
+      if self.mode == "repl": 
+        main_strs.append([y-1,1,f"(>>>):{user_line} >",c.curses.A_BOLD])
+      if self.mode == "visual": 
+        main_strs.append([y-1,1,f"({selected_range[0]}:{selected_range[1]} /{self.len_resdir})",c.curses.A_BOLD])
       return main_strs
 
     while True:
@@ -225,13 +231,28 @@ class Nav():
       can_scroll_up   = lambda:choice > 0
       can_scroll_down = lambda:choice < len(choices)-1 
       def scroll_up(c=choice,o=offset):
-          if (c-o) == 0: o -= 1
-          c -= 1
-          return c,o
+        if (c-o) == 0: o -= 1
+        c -= 1
+        return c,o
       def scroll_down(c=choice,o=offset,sc=screen_fit):
-          if (c-o) == sc: o += 1
-          c += 1
-          return c,o
+        if (c-o) == sc: o += 1
+        c += 1
+        return c,o
+      def scroll_page_up(c=choice,o=offset,sc=screen_fit):
+        if (c-(sc*2)) > 0:
+          c -= sc
+          o -= sc
+        else:
+          c = o = 0
+        return c,o
+      def scroll_page_down(c=choice,o=offset,sc=screen_fit):
+        if (c+(sc*2)) < len(choices)-1:
+          c += sc
+          o += sc
+        else:
+          c = len(choices)-1
+          o = c - sc
+        return c,o
 
       self.log(f"{self.mode}","about to evalute key")
       if self.mode == "normal":
@@ -240,21 +261,13 @@ class Nav():
         elif user_key in ['j', "KEY_DOWN"] and can_scroll_down():
           choice, offset = scroll_down()
         elif user_key == 'K':
-          if (choice-(screen_fit*2)) > 0:
-            choice -= screen_fit
-            offset -= screen_fit
-          else:
-            choice = offset = 0
+          choice, offset = scroll_page_up()
         elif user_key == 'J':
-          if (choice+(screen_fit*2)) < len(choices)-1:
-            choice += screen_fit
-            offset += screen_fit
-          else:
-            choice = len(choices)-1
-            offset = choice - screen_fit
+          choice, offset = scroll_page_down()
         elif user_key == '?': ranger_help(info, (len(info)*2,c.max_x-8,4,4))
         elif user_key == '/': self.mode = "search"
         elif user_key == ':': self.mode = "command"
+        elif user_key == '>': self.mode = "repl"
         elif user_key == 'v': self.mode = "visual"; self.visual_markpoint = choice
         elif user_key == None: user_key = 'k' ; continue
         elif user_key in self.break_list: break
@@ -300,26 +313,36 @@ class Nav():
           self.mode = "normal"
           info["cmd"] = user_line[:-1]
           break
-      elif self.mode == "visual":
-        if user_key in ["^[","\n","l","h","v"]:
+      elif self.mode == "repl":
+        user_key, user_line = handle_line_input(user_key, user_line)
+        if user_key == '\n': #enter
           self.mode = "normal"
-          if user_key == "\n": break
+          try:
+            eval(user_line[:-1])
+          except Exception as e:
+            self.log(f"{e=}\n{user_line=}","raised exception while eval")
+      elif self.mode == "visual":
+        if user_key in ["^[","\n","l","h","v","q"]:
+          self.mode = "normal"
+          if user_key in ["\n","q"]: break
         elif user_key in["KEY_UP", "k"] and can_scroll_up():
           choice, offset = scroll_up()
         elif user_key in ["KEY_DOWN", "j"] and can_scroll_down():
           choice, offset = scroll_down()
+        elif user_key == 'K':
+          choice, offset = scroll_page_up()
+        elif user_key == 'J':
+          choice, offset = scroll_page_down()
         elif user_key == '?': ranger_help(info, (len(info)*2,c.max_x-8,4,4))
 
     info["choice"] = choice
     self.log(f"{choice=}\n{choices[keys[choice]]=}","get_choice return ->")
 
-    ret = choices[keys[choice]]
+    
     if info["sr"][0] != info["sr"][1]:
-      for i in range(info["sr"][0],info["sr"][1]):
-        self.log(f"{i=}")
-      # return [choices[keys[choice]][i] for i in range(*info["sr"])], info
+      return [choices[keys[i]] for i in range(*info["sr"])], info
 
-    return ret, info
+    return choices[keys[choice]], info
 
 
 from os import popen
@@ -446,11 +469,10 @@ def stdin_to_list():
       res.append(list(literal_eval(ln)))
     except ValueError as e:
       print(f"{e=}\n{ln=}")
-  nut.info(res)
   return res
 
 if __name__ == "__main__":
-  from os import dup2
+  from os import dup2, system
   obj = stdin_to_list()
   tty=open("/dev/tty")
   dup2(tty.fileno(), 0)
@@ -458,7 +480,10 @@ if __name__ == "__main__":
     print("no stdin")
   nav = Nav()
   nav.opts["endless_search_mode"] = False
-  print(nav.navigate(obj))
+  res = nav.navigate(obj)
+  for i in res:
+    print(f"kill {i[1]}")
+    system(f"kill {i[1]}")
   # nav.navigate([123,12,12,"eqwe","asdv",[12,"de",["as",12,43],23],12])
 
 # pseudo code "cnav":
