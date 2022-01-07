@@ -2,14 +2,19 @@
 
 
 '''consts'''
-cli = {"RED"  : "\033[1;31m"
-    ,"BLUE" : "\033[1;34m"
-    ,"CYAN" : "\033[1;36m"
-    ,"GREEN": "\033[0;32m"
-    ,"RESET": "\033[0;0m"
-    ,"BOLD" :   "\033[;1m"
+cli = {
+     "RED"    : "\033[1;31m"
+    ,"BLUE"   : "\033[1;34m"
+    ,"CYAN"   : "\033[1;36m"
+    ,"GREEN"  : "\033[0;32m"
+    ,"RESET"  : "\033[0;0m"
+    ,"NORMAL" : "\033[0;0m"
+    ,"R"      : "\033[0;0m"
+    ,"BOLD"   : "\033[;1m"
+    ,"B"      : "\033[;1m"
     ,"REVERSE": "\033[;7m"
-    }
+    ,"REV"    : "\033[;7m"
+    }         
 
 log_config = {
     "format":"[%(asctime)s|%(filename)s|%(funcName)s|%(lineno)d]> %(message)s"
@@ -126,6 +131,18 @@ def listing(obj):
 
 '''context managers'''
 from contextlib import contextmanager 
+
+@contextmanager
+def attr(*attrs):
+  print(type(attrs))
+  attr_ = []
+  for a in attrs:
+    attr_.append(cli[a])
+  for a in attr_:
+    print(a, end="")
+  yield None
+  print(cli["RESET"], end="")
+
 class Curses():
   def __init__(self):
     import curses 
