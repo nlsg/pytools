@@ -12,7 +12,6 @@ def find_headlines(response_text):
     print(headline.text)
   return headlines
 
-
 # url = 'https://inshorts.com/en/read'
 url = 'https://www.20min.ch/'
 response = requests.get(url)
@@ -29,6 +28,4 @@ good_headlines = list(dict.fromkeys(good_headlines))
 from io import BytesIO
 for i in good_headlines:
   Image.open(BytesIO(requests.get(i).content)).show()
-
-bytes io
 

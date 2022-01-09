@@ -129,7 +129,7 @@ def listing(obj):
     except:
       print(f"[{i}] -> {obj}")
 
-'''context managers'''
+'''contextmanagers'''
 from contextlib import contextmanager 
 
 @contextmanager
@@ -162,10 +162,14 @@ class Curses():
     else: 
       popup_w = self.stdscr.subwin(*coords)
     popup_w.clear()
-    popup_w.box()
     if title_str != None:   popup_w.addstr(0,1,title_str)
     return popup_w
-
+  @contextmanager
+  def detach(self):
+    #detach curses for system operations()
+    self.__exit__(None,None,None)
+    yield None
+    self.__enter__()
   @contextmanager
   def render(self, wnd):
     #simple clear -> do xy -> refresh contextmanager
@@ -174,10 +178,11 @@ class Curses():
       yield wnd
     finally:
       wnd.refresh()
-  def render_win(self, win,content_list,title="",y_start=1):
+  def render_win(self, win,content_list,title="",y_start=1, getch=False):
     '''
     each contentl
     '''
+    y,x = win.getmaxyx()
     with self.render(win) as scr:
       scr.box()
       scr.addstr(0,1,title)
@@ -190,6 +195,7 @@ class Curses():
             scr.addstr(y_start,1, *s)
         else:
           scr.addstr(y_start,1, s)
+        if y_start+2 == y: break
         y_start += 1
   def __exit__(self, type, value, traceback):
     self.curses.nocbreak()
