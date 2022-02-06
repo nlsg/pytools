@@ -40,9 +40,6 @@ def standard_handler(arg_list, func=ocr_func):
     nut.notify("standard_hnd", f"{arg} took {tt:.2f}")
   return res, tms
 
-cont = nut.ls("easypay_assets/test/*")
-nut.listing((imgs := nut.grep("bill", cont)))
-
 def perform_ocr(paths_to_img_files):
   '''returns two objects: ocr_results, time'''
   with nut.Timer():
@@ -65,14 +62,16 @@ def pack_results(raw_results, times, paths):
       })
     return essence
 
+cont = nut.ls("easypay_assets/test/*")
+nut.listing((imgs := nut.grep("bill", cont)))
+
 essence = []
 # res, tms = perform_ocr(imgs)
 essence = pack_results(res, tms, imgs)
 nut.listing(essence)
 nut.listing(res)
 nut.listing(tms)
-nut.listing(tms)
-
+input()
 essence = []
 for i in range(len(res)):#for testing object
   print(f"{i=}")

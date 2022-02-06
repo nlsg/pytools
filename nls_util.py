@@ -63,12 +63,16 @@ def quiet_exit(exit_code=0,msg="",*args,**kwargs):
   sys.stderr = open('/dev/null', 'w')
   sys.exit(exit_code)
 
-def notify(title, msg = "", argstr = "", critical = False):
+def notify(title, msg = "", argstr = "", critical = False, t=None):
   '''send a notification thru notify-send package.'''
   import os
   if critical:
     argstr +=  " --urgency=critical "
+  if t != None:
+    argstr += f" -t {str(t)}"
   os.system(f"notify-send {argstr} \"{title}\" \"{msg}\"")
+
+
 
 def int_input(fail_txt = "input has to be a number!", txt = "enter a number: ", **kwargs):
   '''force usr to input a integer''' 
@@ -134,7 +138,6 @@ from contextlib import contextmanager
 
 @contextmanager
 def attr(*attrs):
-  print(type(attrs))
   attr_ = []
   for a in attrs:
     attr_.append(cli[a])
@@ -156,11 +159,16 @@ class Curses():
     self.curses.curs_set(0)
   def popup(self, title_str=None, coords = ()):
     '''returns a popup_window which is nicely placed on the stdscr''' 
+    def auto_centered_win():
+      return self.stdscr.subwin(self.max_y//2, self.max_x//2,self.max_y//4,self.max_x//4)
     popup_w = None
     if len(coords) < 4:
-      popup_w = self.stdscr.subwin(self.max_y//2, self.max_x//2,self.max_y//4,self.max_x//4)
+      popup_w = auto_centered_win()
     else: 
-      popup_w = self.stdscr.subwin(*coords)
+      try:
+        popup_w = self.stdscr.subwin(*coords)
+      except:
+        popup_w = auto_centered_win()
     popup_w.clear()
     if title_str != None:   popup_w.addstr(0,1,title_str)
     return popup_w
@@ -180,7 +188,11 @@ class Curses():
       wnd.refresh()
   def render_win(self, win,content_list,title="",y_start=1, getch=False):
     '''
-    each contentl
+    render a content_list to a curses window,
+    a content list can contain strings and/or
+    lists with arguments for the addstr function 
+    (e.g. "a str" or (x,y,"a str",CURSES_ATTRIBUTE))
+    the attribute is not necessary
     '''
     y,x = win.getmaxyx()
     with self.render(win) as scr:
@@ -189,10 +201,16 @@ class Curses():
       for s in content_list:
         if type(s) == list:
           if type(s[0]) == int:
-            scr.addstr(*s)
+            try:
+              scr.addstr(*s)
+            except: 
+              pass
             continue
           else:
-            scr.addstr(y_start,1, *s)
+            try:
+              scr.addstr(y_start,1, *s)
+            except:
+              pass
         else:
           scr.addstr(y_start,1, s)
         if y_start+2 == y: break
