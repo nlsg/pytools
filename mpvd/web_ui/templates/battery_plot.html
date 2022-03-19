@@ -1,0 +1,18 @@
+<div id="load_battery_info" class="load_battery_info">
+	<div id='bat_graph' class='chart'”></div>
+	<div id='cpu_graph' class='chart'”></div>
+	<div id='mem_graph' class='chart'”></div>
+	<div id='cpu_3d_graph' class='chart'”></div>
+	<div id='mem_3d_graph' class='chart'”></div>
+		<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+		<script type='text/javascript'>
+			Plotly.plot('bat_graph',{{bat_line_graph | safe}},{});
+			Plotly.plot('cpu_graph',{{cpu_line_graph | safe}},{});
+			Plotly.plot('mem_graph',{{mem_line_graph | safe}},{});
+			Plotly.plot('cpu_3d_graph',{{cpu_figure | safe}},{});
+			Plotly.plot('mem_3d_graph',{{mem_figure | safe}},{});
+		</script>
+		<script type='text/javascript'>
+		</script>
+	</div>
+</div>

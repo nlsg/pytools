@@ -69,13 +69,12 @@ def main() -> None:
 
 
 main_thread = Thread(target=main)
-from cnav import nav
 from nls_util_assets.json_test_data import json_test_data0  as jtd0 
 import nls_util as nut
 import requests as req
 
-l1 = [jtd0, [33,"wewe"]]
-print(nav([l1.__dir__(),l1]))
 
 res = req.get("https://jsonplaceholder.typicode.com/comments").json()
 
+
+if __name__ == "__main__": main()

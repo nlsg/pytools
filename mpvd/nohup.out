@@ -1,0 +1,20 @@
+[ffmpeg/demuxer] mp3: Estimating duration from bitrate, this may be inaccurate
+ (+) Audio --aid=1 (mp3 1ch 48000Hz)
+File tags:
+ Artist: Asheru
+ Genre: Hip-Hop
+ Title: Judo Flip
+AO: [pulse] 48000Hz mono 1ch float
+[KA: 00:00:00 / 00:04:46 (0%)[KA: 00:00:01 / 00:04:46 (0%)
+
+Exiting... (Quit)
+[ffmpeg/demuxer] mp3: Estimating duration from bitrate, this may be inaccurate
+ (+) Audio --aid=1 (mp3 1ch 48000Hz)
+File tags:
+ Artist: Asheru
+ Genre: Hip-Hop
+ Title: Judo Flip
+AO: [pulse] 48000Hz mono 1ch float
+[KA: 00:00:00 / 00:04:46 (0%)[KA: 00:00:01 / 00:04:46 (0%)[KA: 00:00:01 / 00:04:46 (1%)[KA: 00:00:02 / 00:04:46 (1%)[KA: 00:00:03 / 00:04:46 (1%)[KA: 00:00:04 / 00:04:46 (1%)[KA: 00:00:04 / 00:04:46 (2%)[KA: 00:00:05 / 00:04:46 (2%)[KA: 00:00:06 / 00:04:46 (2%)[KA: 00:00:07 / 00:04:46 (2%)[KA: 00:00:07 / 00:04:46 (3%)[KA: 00:00:08 / 00:04:46 (3%)
+
+Exiting... (Quit)

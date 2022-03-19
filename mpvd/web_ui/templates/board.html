@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block content %}
+	<div class="content-section">
+		<form method="POST">
+			{{ form.hidden_tag() }}
+			<fieldset class="form-group">
+				<legend class="border-bottom mb-4">Dashboard</legend>
+				<div class="form-group">
+					{{ info }}
+					<br></br>
+				</div>
+				<div class="form-group">
+					{{ form.str_field.label(class="form-control-label") }}
+					{% if form.str_field.errors %}
+						{{ form.str_field(class="form-control form-control-lg is-invalid") }}
+						<div class="invalid-feedback">
+							{% for error in form.str_field.errors %}
+								<span>{{ error }}</span>
+							{% endfor %}
+						</div>
+					{% else %}
+						{{ form.str_field(class="form-control form-control-lg") }}
+					{% endif %}
+				</div>
+				<div class="form-check">
+					{{ form.bool_field(class="form-check-input") }}
+					{{ form.bool_field.label(class="form-check-label") }}
+				</div>
+				<div class="form-group">
+					<input class="btn bn-outline-info" type="submit" value="Toggle" name="toggle_btn"/>
+					{% include "dyn_board.html" %}
+					<input class="btn bn-outline-info" type="submit" value="Val2" name="action2" />
+				</div>
+			</fieldset>
+			<!-- <div class="form-group"> -->
+			<!-- 	{{ form.submit(class="btn bn-outline-info") }} -->
+			<!-- </div> -->
+			<small class="text-muted ml-2">
+				<a href="#">Forgot Password?</a>
+			</small>
+		</form>
+	</div>
+	<div class="border-top pt-3">
+		<small class="text-muted">
+			Need An Account? <a class="ml-2" href="{{ url_for('register') }}">Sign Up Now</a>
+		</small>
+	</div>
+{% endblock content %}
